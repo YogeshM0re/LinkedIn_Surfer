@@ -1,0 +1,191 @@
+#slider {
+    position: absolute;
+    z-index: 9000000000000000000;
+    top: 0px;
+    right: 0px;
+    background: linear-gradient(to right, #0077b5, #00b5b5);
+    width: 0px;
+    transition: 0.4s;
+    height: fit-content;
+    overflow-y: fixed;
+}
+
+
+#sheader {
+    position: sticky;
+    top: 0;
+    padding: 20px;
+    text-align: center;
+    z-index: 5;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+
+    background: linear-gradient(to right, #0077b5, #00b5b5);
+    border-radius: 10px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.4s;
+}
+
+#sheader:hover {
+    background: linear-gradient(to right, #00669c, #02a0a0);
+}
+
+#sheader>div>h1,
+#sfooter>h2 {
+    color: white !important;
+}
+
+#sbodycontainer {
+    color: white;
+}
+
+#sfooter {
+    position: sticky;
+    bottom: 0;
+    background-color: #0077b5;
+    text-align: center;
+    z-index: 5;
+    box-shadow: 0 0 10px rgba(5, 37, 54, 0.5);
+    background: linear-gradient(to right, #00669c, #02a0a0);
+    padding: 20px;
+    transition: background-color 0.4s;
+}
+
+
+#extractBtn,
+#savepdf {
+
+    border-radius: 4px;
+    background-color: #0077b5;
+    border: none;
+    color: #FFFFFF;
+    text-align: center;
+    font-size: 28px;
+    padding: 5px;
+    width: 200px;
+    transition: all 0.5s;
+    cursor: pointer;
+    margin: 5px;
+    opacity: 0.8;
+    position: relative;
+}
+
+
+#clear_text_button:hover {
+    background-color: #0077b5;
+    border-bottom: 2px solid grey;
+}
+
+.internal_button {
+    display: inline-block;
+    padding: 15px 25px;
+    font-size: 15px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    outline: none;
+    color: #fff;
+    background: linear-gradient(to right, #140002, #0077b5);
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.4s;
+}
+
+.internal_button:hover {
+    background: linear-gradient(to right, #0077b5, #140002);
+}
+
+
+.internal_button:active {
+    background-color: #1d6000;
+    box-shadow: 0 5px #666;
+    transform: translateY(4px);
+}
+
+.sticky_buttons {
+    position: sticky;
+    display: block;
+    font-size: 16px;
+    margin: 15px 25px 0px 15px;
+    ;
+}
+
+#deepscan {
+    padding: 10px;
+    opacity: 100% !important;
+}
+
+
+#Url_extract_button {
+    position: absolute;
+    left: 50%;
+}
+
+
+#deepscancontainer {
+    position: sticky !important;
+    z-index: 5;
+}
+
+#deepscanlabel {
+    color: white;
+    padding: 15px;
+    border: 1px solid rgb(100, 237, 223);
+}
+
+textarea {
+    margin: 1px;
+    padding-right: 20px;
+    border: 2px solid black;
+    height: 250px !important;
+
+}
+
+textarea:hover {
+    background-color: rgb(178, 197, 231);
+    border: 2px solid rgb(27, 15, 49);
+}
+
+
+#header {
+    background: linear-gradient(to right, #00669c, #02a0a0);
+    color: #ffffff;
+    padding: 20px;
+    text-align: center;
+    background-blend-mode: overlay;
+    transition: background-color 0.4s;
+}
+
+#header img {
+    max-width: 100px;
+    height: auto;
+}
+
+#header h1 {
+    font-weight: bold;
+    color: #ffffff;
+}
+
+
+
+#inputSection {
+    padding: 15px;
+    background-color: #0077b5;
+    color: #ffffff;
+    text-align: center;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+#inputSection label {
+    margin-right: 10px;
+}
+
+#inputDescription {
+    padding: 8px;
+    border: 1px solid #ffffff;
+    border-radius: 5px;
+    font-weight: bold;
+    color: #ffffff;
+
+}
