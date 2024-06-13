@@ -39,7 +39,7 @@ function main() {
         <br/>
         <div class='internal_button' id='skills_extract_button'>Save All Pages</div>
         <div class='internal_button' id='Url_extract_button'>Extract Current Page</div>
-                <div class='internal_button' id='send_request'>Send request </div>
+                <div class='internal' id='send_request'>Send request </div>
 
     </div>
 
@@ -227,31 +227,69 @@ async function extractCompanyInfo() {
   return info;
 }
 
+function findConnectButton(profileTab) {
+  return profileTab.document.querySelector("[aria-label^='Invite']");
+}
+function simulateClick(element, minDelay, maxDelay) {
+  // Generate a random delay between the specified minimum and maximum
+  var delay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+
+  setTimeout(function () {
+    // Simulate mousedown event
+    element.dispatchEvent(new MouseEvent("mousedown"));
+
+    // Simulate mouseup event after the delay
+    setTimeout(function () {
+      element.dispatchEvent(new MouseEvent("mouseup"));
+    }, 10); // Short additional delay to simulate click duration (adjust as needed)
+  }, delay);
+}
+
 function sendConnectRequest(profileTab, callback) {
   const connectButton = findConnectButton(profileTab);
   console.log("Connect Button", connectButton);
   if (connectButton) {
     connectButton.click();
+    simulateClick(connectButton, 1000, 2000);
+    console.log("Connect button clicked by mouse.");
+
     console.log("Connect button clicked.");
     // Wait for the dialog box to appear
-    waitForDialog(profileTab)
-      .then(() => {
-        const inviteButton = profileTab.document.querySelector(
-          '.send-invite[role="dialog"] button.artdeco-button--primary[aria-label="Send without a note"]'
-        );
-        if (inviteButton) {
-          inviteButton.click();
-          console.log("Invite sent without a note.");
-        } else {
-          console.log("Invite button not found.");
-        }
-        // Call the callback function after sending the invite
-        if (callback) callback();
-      })
-      .catch((error) => {
-        console.error("Error sending invite:", error);
-        if (callback) callback();
-      });
+    // waitForDialog(profileTab)
+    // .then(() => {
+    //   const inviteButton = profileTab.document.querySelector(
+    //     '.send-invite[role="dialog"] button.artdeco-button--primary[aria-label="Send without a note"]'
+    //   );
+    //   if (inviteButton) {
+    //     inviteButton.click();
+    //     console.log("Invite sent without a note.");
+    //   } else {
+    //     console.log("Invite button not found.");
+    //   }
+    //   // Call the callback function after sending the invite
+    //   if (callback) callback();
+    // })
+    // .catch((error) => {
+    console.log("Connect button clicked.");
+    // Wait for the dialog box to appear
+    // waitForDialog(profileTab)
+    // .then(() => {
+    //   const inviteButton = profileTab.document.querySelector(
+    //     '.send-invite[role="dialog"] button.artdeco-button--primary[aria-label="Send without a note"]'
+    //   );
+    //   if (inviteButton) {
+    //     inviteButton.click();
+    //     console.log("Invite sent without a note.");
+    //   } else {
+    //     console.log("Invite button not found.");
+    //   }
+    //   // Call the callback function after sending the invite
+    //   if (callback) callback();
+    // })
+    // .catch((error) => {
+    //   console.error("Error sending invite:", error);
+    //   if (callback) callback();
+    // });
   } else {
     console.log("Connect button not found.");
     if (callback) callback();
@@ -276,17 +314,12 @@ function waitForDialog(profileTab, timeout = 3000) {
   });
 }
 
-function findConnectButton(profileTab) {
-  return profileTab.document.querySelector(
-    ".pvs-profile-actions__custom button"
-  );
-}
-
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function extractCompanyInfoFromLink(link, companyInfo) {
+  var msg ="";
   try {
     var companyTab = window.open(link + "about/", "_blank");
     await waitForLoad(companyTab);
@@ -308,12 +341,13 @@ async function extractCompanyInfoFromLink(link, companyInfo) {
     );
     if (profileLink) {
       var profileTab = window.open(profileLink.href, "_blank");
+      const url = "http://localhost:3000";
+      const path = "/message";
+      const method = "POST";
       await waitForLoad(profileTab);
 
       profileTab.scrollTo(0, profileTab.document.body.scrollHeight);
       await sleep(2000);
-
-      await sleep(5000);
 
       const aboutSection = profileTab.document.querySelector(
         'section.artdeco-card[data-view-name="profile-card"]'
@@ -325,22 +359,29 @@ async function extractCompanyInfoFromLink(link, companyInfo) {
         const aboutText = aboutTextElement
           ? aboutTextElement.textContent.trim()
           : "";
-
-        sendConnectRequest(profileTab, () => {
-          document.getElementById("send_request").click();
-        });
-
         profileTab.close();
         companyInfo.push({
           ...companyData,
           ceoProfile: profileLink.href,
           ceoAbout: aboutText,
         });
+        await fetchdata(
+          url,
+          path,
+          method,
+          companyInfo[companyInfo.length - 1]
+        )
+        .then((response) => response.json())
+        .then((data) => {
+          msg = data;
+        });
+        console.log("Message:",msg.message);
+       await fetchdata(url, "/sendInvite", method, {
+          ceoProfile: profileLink.href,
+        })
+        
       } else {
         console.log("No About section found.");
-        sendConnectRequest(profileTab, () => {
-          document.getElementById("send_request").click();
-        });
         profileTab.close();
         companyInfo.push({ ...companyData, ceoProfile: profileLink.href });
       }
