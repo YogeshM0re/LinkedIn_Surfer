@@ -9,48 +9,42 @@ async function saveCookie(page) {
 }
 
 // Load cookie function
-async function loadCookie(page, client) {
-  // const retriveq = 'SELECT cookie from users WHERE id=$1';
-  // const userID=1;
-  // const R= await client.query(retriveq, [userID]);
-  // const cooki=R.rows[0].cookie;
-  // const cookieJsonw = JSON.stringify(cooki, null, 2);
-  // await fs.writeFile('./linkedin_puppet_by_balaji/balaji.json', cookieJsonw);
-
-  const cookieJson = await fs.readFile("./Backend/cookies.json", "utf-8");
-  const cookies = JSON.parse(cookieJson);
-
-  for (let i = 0; i < cookies.length; i++) {
-    await page.setCookie(cookies[i]);
+async function loadCookie(page) {
+  try {
+    const cookieJson = await fs.readFile("./cookies.json", "utf-8");
+    const cookies = JSON.parse(cookieJson);
+    await page.setCookie(...cookies);
+    console.log("Cookies loaded and set.");
+  } catch (error) {
+    console.log("No cookies found, proceeding without loading cookies.");
   }
-
-  const currentCookies = await page.cookies();
-  console.log("Set Cookies:", currentCookies);
 }
 
+// Reduce page load by intercepting requests
 async function reducePage(page) {
   await page.setRequestInterception(true);
   page.on("request", (request) => {
-    if (["image"].indexOf(request.resourceType()) !== -1) {
-      request.respond({
-        body: fsys.readFileSync("./linkedin_puppet_by_balaji/local.png"),
-      });
+    if (["image", "stylesheet", "font"].includes(request.resourceType())) {
+      request.abort();
     } else {
       request.continue();
     }
   });
 }
 
-async function interceptXHR(URLsegment) {
+// Intercept XHR requests and log their responses
+async function interceptXHR(page, URLsegment) {
   await page.setRequestInterception(true);
   page.on("request", (request) => {
     if (
       request.resourceType() === "xhr" &&
-      request.url().indexOf(URLsegment) != -1
+      request.url().includes(URLsegment)
     ) {
       request.continue();
       request.response().then((response) => {
-        return response.JSON;
+        response.json().then((data) => {
+          console.log("XHR response:", data);
+        });
       });
     } else {
       request.continue();
