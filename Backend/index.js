@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const { loginToLinkedIn } = require("./login");
 const { launch } = require("puppeteer");
 const { loadCookie, reducePage } = require("./Utilities");
 
@@ -79,7 +78,6 @@ app.post("/sendInvite", async (req, res) => {
       const connectButton = buttons.find(
         (button) => button.outerText.trim() === "Connect"
       );
-      console.log("Connect button found:", connectButton);
       if (connectButton) {
         connectButton.click();
       }

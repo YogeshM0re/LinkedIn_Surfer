@@ -1,80 +1,63 @@
-const puppeteer = require("puppeteer");
+const { launch } = require("puppeteer");
 const fs = require("fs").promises;
 
-// Save cookie function
+// const contents = fs.readFile('list.json', 'utf-8');
+
+//save cookie function
 const saveCookie = async (page) => {
   const cookies = await page.cookies();
   const cookieJson = JSON.stringify(cookies, null, 2);
   await fs.writeFile("cookies.json", cookieJson);
 };
 
-// Load cookie function
+//load cookie function
 const loadCookie = async (page) => {
-  try {
-    const cookieJson = await fs.readFile("cookies.json", "utf-8");
-    const cookies = JSON.parse(cookieJson);
-    await page.setCookie(...cookies);
-  } catch (error) {
-    console.log("No cookies found, proceeding without loading cookies.");
-  }
+  const cookieJson = await fs.readFile("cookies.json");
+  const cookies = JSON.parse(cookieJson);
+  await page.setCookie(...cookies);
 };
 
-const loginToLinkedIn = async () => {
-  const browser = await puppeteer.launch({ headless: false });
+(async () => {
+  const browser = await launch({ headless: false });
   const page = await browser.newPage();
+  await page.goto("https://www.linkedin.com/login");
+  await page.type("#username", "tamab28841@noefa.com");
+  await page.type("#password", "f@5*WkBZ+9a!F66");
+  await page.click(".btn__primary--large");
+  await page.waitForNavigation();
 
-  try {
-    await loadCookie(page);
-    await page.goto("https://www.linkedin.com");
-    await page.waitForNavigation({ waitUntil: "networkidle2" });
-
-    if (page.url().includes("feed")) {
-      console.log("Logged in using cookies");
-    } else {
-      await page.type("#session_key", "tihijol638@kernuo.com");
-      await page.type("#session_password", "f@5*WkBZ+9a!F66");
-      await page.click(".sign-in-form__submit-btn--full-width");
-      await page.waitForNavigation();
-      await saveCookie(page);
-      console.log("Logged in using credentials and saved cookies");
-    }
-  } catch (error) {
-    console.error("Error during login:", error);
-  }
-
-  return { browser, page };
-};
-
-const reducePage = async (page) => {
+  await saveCookie(page); //save cookie
+  //
+  await browser.close();
+})();
+async function reducePage(page) {
   await page.setRequestInterception(true);
   page.on("request", (request) => {
-    if (["image", "stylesheet", "font"].includes(request.resourceType())) {
+    if (
+      ["image", "stylesheet", "font"].indexOf(request.resourceType()) !== -1
+    ) {
       request.abort();
     } else {
       request.continue();
     }
   });
-};
+}
 
-const interceptXHR = async (page, URLsegment) => {
+async function interceptXHR(page, URLsegment) {
   await page.setRequestInterception(true);
   page.on("request", (request) => {
     if (
       request.resourceType() === "xhr" &&
-      request.url().includes(URLsegment)
+      request.url().indexOf(URLsegment) !== -1
     ) {
       request.continue();
-      request.response().then((response) => response.json());
+      request.response().then((response) => {
+        return response.json(); // Return the parsed JSON response
+      });
     } else {
       request.continue();
     }
   });
-};
+}
 
-module.exports = {
-  loginToLinkedIn,
-  saveCookie,
-  loadCookie,
-  reducePage,
-  interceptXHR,
-};
+module.exports = { saveCookie, loadCookie, reducePage, interceptXHR };
