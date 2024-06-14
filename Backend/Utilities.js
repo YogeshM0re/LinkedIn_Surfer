@@ -1,16 +1,15 @@
-const fs = require('fs').promises;
-const fsys = require('fs');
+const fs = require("fs").promises;
+const fsys = require("fs");
 
 // Save cookie function
 async function saveCookie(page) {
   const cookies = await page.cookies();
   const cookieJson = JSON.stringify(cookies, null, 2);
-  await fs.writeFile('./cookies.json', cookieJson);
+  await fs.writeFile("./cookies.json", cookieJson);
 }
 
 // Load cookie function
 async function loadCookie(page, client) {
-
   // const retriveq = 'SELECT cookie from users WHERE id=$1';
   // const userID=1;
   // const R= await client.query(retriveq, [userID]);
@@ -18,23 +17,23 @@ async function loadCookie(page, client) {
   // const cookieJsonw = JSON.stringify(cooki, null, 2);
   // await fs.writeFile('./linkedin_puppet_by_balaji/balaji.json', cookieJsonw);
 
-  const cookieJson = await fs.readFile('./linkedin_puppet_by_balaji/cookies.json', 'utf-8');
+  const cookieJson = await fs.readFile("./Backend/cookies.json", "utf-8");
   const cookies = JSON.parse(cookieJson);
 
   for (let i = 0; i < cookies.length; i++) {
     await page.setCookie(cookies[i]);
   }
-  
+
   const currentCookies = await page.cookies();
-  console.log('Set Cookies:', currentCookies);
+  console.log("Set Cookies:", currentCookies);
 }
 
 async function reducePage(page) {
   await page.setRequestInterception(true);
-  page.on('request', (request) => {
-    if (['image'].indexOf(request.resourceType()) !== -1) {
+  page.on("request", (request) => {
+    if (["image"].indexOf(request.resourceType()) !== -1) {
       request.respond({
-        body: fsys.readFileSync('./linkedin_puppet_by_balaji/local.png')
+        body: fsys.readFileSync("./linkedin_puppet_by_balaji/local.png"),
       });
     } else {
       request.continue();
@@ -44,10 +43,13 @@ async function reducePage(page) {
 
 async function interceptXHR(URLsegment) {
   await page.setRequestInterception(true);
-  page.on('request', request => {
-    if (request.resourceType() === 'xhr' && request.url().indexOf(URLsegment) != -1) {
+  page.on("request", (request) => {
+    if (
+      request.resourceType() === "xhr" &&
+      request.url().indexOf(URLsegment) != -1
+    ) {
       request.continue();
-      request.response().then(response => {
+      request.response().then((response) => {
         return response.JSON;
       });
     } else {
@@ -60,5 +62,5 @@ module.exports = {
   saveCookie,
   loadCookie,
   reducePage,
-  interceptXHR
+  interceptXHR,
 };

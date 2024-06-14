@@ -15,7 +15,26 @@ chrome.runtime.sendMessage(todoresp);
 main();
 
 function main() {
-  var sliderInnerHTMLString = `<!-- HEADER IS HERE -->
+  const sliderInnerHTMLString = generateSliderHTML();
+  sliderGen(sliderInnerHTMLString);
+
+  chrome.runtime.onMessage.addListener((msg) => {
+    if (msg.todo === "toggle") {
+      slider();
+    }
+  });
+
+  document.getElementById("clear_text_button").addEventListener("click", clearTextFields);
+  document.getElementById("Url_extract_button").addEventListener("click", async () => {
+    document.getElementById("CompanyUrl").value = JSON.stringify(await extract());
+  });
+  document.getElementById("skills_extract_button").addEventListener("click", scrapeAllPages);
+  document.getElementById("send_request").addEventListener("click", send_request);
+  document.getElementById("save_profile_data_button").addEventListener("click", saveProfileData);
+}
+
+function generateSliderHTML() {
+  return `<!-- HEADER IS HERE -->
     <div id='header'>
         <img src='https://acumen.llc/Software-Companies-Mumbai-India-Images/Acumen-logo-tb.png' alt='Logo'/>
         <h1>LinkedIn Surfer</h1>
@@ -29,7 +48,6 @@ function main() {
         <label for='pageLimit'>Page Limit: </label>
         <input type='number' id='pageLimit' placeholder='Enter page limit' value='5'/>
     </div>
-    
     <!-- THE BODY CONTAINER IS HERE -->
     <div id='sbodycontainer'>
         <br/>
@@ -39,51 +57,19 @@ function main() {
         <br/>
         <div class='internal_button' id='skills_extract_button'>Save All Pages</div>
         <div class='internal_button' id='Url_extract_button'>Extract Current Page</div>
-                <div class='internal' id='send_request'>Send request </div>
-
+        <div class='internal' id='send_request'>Send request </div>
     </div>
-
-  
-    
     <!-- THE FOOTER IS HERE -->
     <div id='sfooter'><hr/>
         <div class='internal_button' id='save_profile_data_button'>Save Extracted Links</div>
-    </div>
-  `;
-  sliderGen(sliderInnerHTMLString);
-  chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
-    if (msg.todo == "toggle") {
-      slider();
-    }
+    </div>`;
+}
+
+function clearTextFields() {
+  const ids = ["CompanyUrl"];
+  ids.forEach(id => {
+    document.getElementById(id).value = "";
   });
-  document
-    .getElementById("clear_text_button")
-    .addEventListener("click", function () {
-      var ids = ["CompanyUrl"];
-      for (var i = 0; i < ids.length; i++) {
-        document.getElementById(ids[i]).value = "";
-      }
-    });
-  document
-    .getElementById("Url_extract_button")
-    .addEventListener("click", async function () {
-      console.log("slidersscrolled");
-      document.getElementById("CompanyUrl").value = JSON.stringify(
-        await extract()
-      );
-    });
-
-  document
-    .getElementById("skills_extract_button")
-    .addEventListener("click", scrapeAllPages);
-
-  document
-    .getElementById("send_request")
-    .addEventListener("click", send_request);
-
-  document
-    .getElementById("save_profile_data_button")
-    .addEventListener("click", saveProfileData);
 }
 
 async function send_request() {
@@ -91,205 +77,122 @@ async function send_request() {
   sendConnectRequest(window);
 }
 
-function Description() {
-  var inputDescription = document.getElementById("inputDescription").value;
+function getDescription() {
+  const inputDescription = document.getElementById("inputDescription").value;
   if (inputDescription.trim() === "") {
     alert("Description cannot be empty");
     return "";
-  } else {
-    return inputDescription;
   }
+  return inputDescription;
 }
 
 async function readCookies() {
-  const cok = await cookieStore.getAll();
-  return cok;
+  return await cookieStore.getAll();
 }
 
 async function saveProfileData() {
-  var DesC = Description();
-  if (DesC === "") {
-    return;
-  }
-  var textBoxIds = ["CompanyUrl"];
-  var profileData = {};
-  for (var i = 0; i < textBoxIds.length; i++) {
-    var tempid = textBoxIds[i];
-    if (tempid.includes("text")) tempid = tempid.replace("text", "");
+  const description = getDescription();
+  if (description === "") return;
 
-    if (document.getElementById(textBoxIds[i]).value)
-      profileData[tempid] = JSON.parse(
-        document.getElementById(textBoxIds[i]).value
-      );
-    else profileData[tempid] = "No data";
-  }
-  var filename = prompt("Enter file Name:");
-  var data = new Blob([JSON.stringify(profileData)], {
-    type: "application/json",
-  });
-  var a = document.createElement("a"),
-    url = URL.createObjectURL(data);
+  const textBoxIds = ["CompanyUrl"];
+  const profileData = textBoxIds.reduce((data, id) => {
+    const key = id.includes("text") ? id.replace("text", "") : id;
+    data[key] = document.getElementById(id).value || "No data";
+    return data;
+  }, {});
+
+  const filename = prompt("Enter file Name:");
+  const data = new Blob([JSON.stringify(profileData)], { type: "application/json" });
+  const url = URL.createObjectURL(data);
+  const a = document.createElement("a");
   a.href = url;
-  a.download = filename + ".txt";
+  a.download = `${filename}.txt`;
   document.body.appendChild(a);
   a.click();
 
-  var cookie = await readCookies();
-
-  let Data = { Url: profileData.CompanyUrl, Desc: DesC, UserCookie: cookie };
-  console.log(Data);
-
-  let urls = "https://api-linkedin.acumen.llc";
-  let apipath = "/linkedinrls";
-  let method = "POST";
-
-  await fetchdata(urls, apipath, method, Data);
-  setTimeout(function () {
+  setTimeout(() => {
     document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+    URL.revokeObjectURL(url);
   }, 0);
+
+  const cookies = await readCookies();
+  const requestData = { Url: profileData.CompanyUrl, Desc: description, UserCookie: cookies };
+  const apiUrl = "https://api-linkedin.acumen.llc/linkedinrls";
+
+  await fetchdata(apiUrl, "", "POST", requestData);
 }
 
 function sliderGen(sliderInnerHTMLString) {
-  var slider = document.createElement("div");
+  const slider = document.createElement("div");
   slider.id = "slider";
-  var sliderDivInnerHTML = sliderInnerHTMLString;
-
-  slider.innerHTML += sliderDivInnerHTML;
-
+  slider.innerHTML += sliderInnerHTMLString;
   document.body.prepend(slider);
 }
 
 function slider() {
-  var slider = document.getElementById("slider");
-  var styler = slider.style;
-  if (styler.width == "0px") {
-    styler.width = "400px";
-  } else {
-    styler.width = "0px";
-  }
+  const slider = document.getElementById("slider");
+  slider.style.width = slider.style.width === "0px" ? "400px" : "0px";
 }
 
 async function extractCompanyInfo() {
   const info = {};
 
-  const titleElement = document.querySelector(
-    ".org-top-card__primary-content h1"
-  );
-  if (titleElement) {
-    info.name = titleElement.innerText.trim();
-  }
+  const titleElement = document.querySelector(".org-top-card__primary-content h1");
+  if (titleElement) info.name = titleElement.innerText.trim();
 
-  const overviewElement = document.querySelector(
-    ".org-page-details-module__card-spacing p"
-  );
-  if (overviewElement) {
-    info.overview = overviewElement.innerText.trim();
-  }
+  const overviewElement = document.querySelector(".org-page-details-module__card-spacing p");
+  if (overviewElement) info.overview = overviewElement.innerText.trim();
 
   const websiteElement = document.querySelector('a[rel="noopener noreferrer"]');
-  if (websiteElement) {
-    info.website = websiteElement.href;
-  }
+  if (websiteElement) info.website = websiteElement.href;
 
-  function getTextNextToDt(dtText) {
-    const dtElements = document.querySelectorAll("dt");
-    for (let dt of dtElements) {
-      if (dt.innerText.trim() === dtText) {
-        const nextDd = dt.nextElementSibling;
-        if (nextDd && nextDd.tagName === "DD") {
-          return nextDd.innerText.trim();
-        }
-      }
-    }
-    return null;
-  }
-
-  info.industry = getTextNextToDt("Industry");
-  info.companySize = getTextNextToDt("Company size");
-  info.headquarters = getTextNextToDt("Headquarters");
-  info.founded = getTextNextToDt("Founded");
-  info.specialties = getTextNextToDt("Specialties");
+  const details = ["Industry", "Company size", "Headquarters", "Founded", "Specialties"];
+  details.forEach(detail => {
+    const value = getTextNextToDt(detail);
+    if (value) info[detail.toLowerCase().replace(" ", "")] = value;
+  });
 
   const locationElements = document.querySelectorAll(".org-location-card p");
   if (locationElements) {
-    info.locations = Array.from(locationElements).map((location) =>
-      location.innerText.trim()
-    );
+    info.locations = Array.from(locationElements).map(location => location.innerText.trim());
   }
 
-  Object.keys(info).forEach((key) => {
-    if (info[key] === null) {
-      delete info[key];
-    }
-  });
-
   return info;
+}
+
+function getTextNextToDt(dtText) {
+  const dtElements = document.querySelectorAll("dt");
+  for (let dt of dtElements) {
+    if (dt.innerText.trim() === dtText) {
+      const nextDd = dt.nextElementSibling;
+      if (nextDd && nextDd.tagName === "DD") {
+        return nextDd.innerText.trim();
+      }
+    }
+  }
+  return null;
 }
 
 function findConnectButton(profileTab) {
   return profileTab.document.querySelector("[aria-label^='Invite']");
 }
+
 function simulateClick(element, minDelay, maxDelay) {
-  // Generate a random delay between the specified minimum and maximum
-  var delay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
-
-  setTimeout(function () {
-    // Simulate mousedown event
+  const delay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+  setTimeout(() => {
     element.dispatchEvent(new MouseEvent("mousedown"));
-
-    // Simulate mouseup event after the delay
-    setTimeout(function () {
+    setTimeout(() => {
       element.dispatchEvent(new MouseEvent("mouseup"));
-    }, 10); // Short additional delay to simulate click duration (adjust as needed)
+    }, 10);
   }, delay);
 }
 
 function sendConnectRequest(profileTab, callback) {
   const connectButton = findConnectButton(profileTab);
-  console.log("Connect Button", connectButton);
   if (connectButton) {
     connectButton.click();
     simulateClick(connectButton, 1000, 2000);
-    console.log("Connect button clicked by mouse.");
-
-    console.log("Connect button clicked.");
-    // Wait for the dialog box to appear
-    // waitForDialog(profileTab)
-    // .then(() => {
-    //   const inviteButton = profileTab.document.querySelector(
-    //     '.send-invite[role="dialog"] button.artdeco-button--primary[aria-label="Send without a note"]'
-    //   );
-    //   if (inviteButton) {
-    //     inviteButton.click();
-    //     console.log("Invite sent without a note.");
-    //   } else {
-    //     console.log("Invite button not found.");
-    //   }
-    //   // Call the callback function after sending the invite
-    //   if (callback) callback();
-    // })
-    // .catch((error) => {
-    console.log("Connect button clicked.");
-    // Wait for the dialog box to appear
-    // waitForDialog(profileTab)
-    // .then(() => {
-    //   const inviteButton = profileTab.document.querySelector(
-    //     '.send-invite[role="dialog"] button.artdeco-button--primary[aria-label="Send without a note"]'
-    //   );
-    //   if (inviteButton) {
-    //     inviteButton.click();
-    //     console.log("Invite sent without a note.");
-    //   } else {
-    //     console.log("Invite button not found.");
-    //   }
-    //   // Call the callback function after sending the invite
-    //   if (callback) callback();
-    // })
-    // .catch((error) => {
-    //   console.error("Error sending invite:", error);
-    //   if (callback) callback();
-    // });
+    if (callback) callback();
   } else {
     console.log("Connect button not found.");
     if (callback) callback();
@@ -299,9 +202,7 @@ function sendConnectRequest(profileTab, callback) {
 function waitForDialog(profileTab, timeout = 3000) {
   return new Promise((resolve, reject) => {
     const interval = setInterval(() => {
-      const dialog = profileTab.document.querySelector(
-        '.send-invite[role="dialog"]'
-      );
+      const dialog = profileTab.document.querySelector('.send-invite[role="dialog"]');
       if (dialog) {
         clearInterval(interval);
         resolve();
@@ -315,78 +216,44 @@ function waitForDialog(profileTab, timeout = 3000) {
 }
 
 function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function extractCompanyInfoFromLink(link, companyInfo) {
-  var msg ="";
   try {
-    var companyTab = window.open(link + "about/", "_blank");
+    const companyTab = window.open(link + "about/", "_blank");
     await waitForLoad(companyTab);
 
     companyTab.scrollTo(0, companyTab.document.body.scrollHeight);
     await sleep(2000);
 
-    var companyData = await companyTab.extractCompanyInfo();
+    const companyData = await companyTab.extractCompanyInfo();
     companyTab.close();
 
-    var peopleTab = window.open(link + "people/?keywords=ceo", "_blank");
+    const peopleTab = window.open(link + "people/?keywords=ceo", "_blank");
     await waitForLoad(peopleTab);
 
     peopleTab.scrollTo(0, peopleTab.document.body.scrollHeight);
     await sleep(2000);
 
-    var profileLink = peopleTab.document.querySelector(
-      ".org-people-profile-card__profile-info a.app-aware-link"
-    );
+    const profileLink = peopleTab.document.querySelector(".org-people-profile-card__profile-info a.app-aware-link");
     if (profileLink) {
-      var profileTab = window.open(profileLink.href, "_blank");
-      const url = "http://localhost:3000";
-      const path = "/message";
-      const method = "POST";
+      const profileTab = window.open(profileLink.href, "_blank");
       await waitForLoad(profileTab);
 
       profileTab.scrollTo(0, profileTab.document.body.scrollHeight);
       await sleep(2000);
 
-      const aboutSection = profileTab.document.querySelector(
-        'section.artdeco-card[data-view-name="profile-card"]'
-      );
-      if (aboutSection) {
-        const aboutTextElement = aboutSection.querySelector(
-          '.inline-show-more-text--is-collapsed span[aria-hidden="true"]'
-        );
-        const aboutText = aboutTextElement
-          ? aboutTextElement.textContent.trim()
-          : "";
-        profileTab.close();
-        companyInfo.push({
-          ...companyData,
-          ceoProfile: profileLink.href,
-          ceoAbout: aboutText,
-        });
-        await fetchdata(
-          url,
-          path,
-          method,
-          companyInfo[companyInfo.length - 1]
-        )
-        .then((response) => response.json())
-        .then((data) => {
-          msg = data;
-        });
-        console.log("Message:",msg.message);
-       await fetchdata(url, "/sendInvite", method, {
-          ceoProfile: profileLink.href,
-        })
-        
-      } else {
-        console.log("No About section found.");
-        profileTab.close();
-        companyInfo.push({ ...companyData, ceoProfile: profileLink.href });
-      }
+      const aboutSection = profileTab.document.querySelector('section.artdeco-card[data-view-name="profile-card"]');
+      const aboutText = aboutSection ? aboutSection.querySelector('.inline-show-more-text--is-collapsed span[aria-hidden="true"]').textContent.trim() : "";
+
+      profileTab.close();
+      companyInfo.push({ ...companyData, ceoProfile: profileLink.href, ceoAbout: aboutText });
+
+      await fetchdata("http://localhost:3000", "/message", "POST", companyInfo[companyInfo.length - 1]);
+      await fetchdata("http://localhost:3000", "/sendInvite", "POST", { ceoProfile: profileLink.href });
+
     } else {
-      console.log("No CEO profile link found.");
       companyInfo.push(companyData);
     }
     peopleTab.close();
@@ -395,104 +262,67 @@ async function extractCompanyInfoFromLink(link, companyInfo) {
   }
 }
 
-// Utility function to wait for a tab to load
 function waitForLoad(tab) {
   return new Promise((resolve, reject) => {
-    tab.addEventListener("load", function () {
-      resolve();
-    });
-    tab.addEventListener("error", function (error) {
-      reject(error);
-    });
+    tab.addEventListener("load", () => resolve());
+    tab.addEventListener("error", error => reject(error));
   });
 }
 
-// Utility function to add a delay
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 async function extract() {
-  var appAwareLinks = document.querySelectorAll(
-    ".scaffold-layout__main .entity-result__title-text .app-aware-link"
-  );
-  var companyInfo = [];
+  const appAwareLinks = document.querySelectorAll(".scaffold-layout__main .entity-result__title-text .app-aware-link");
+  const companyInfo = [];
 
-  if (appAwareLinks.length > 0) {
-    for (let i = 0; i < appAwareLinks.length; i++) {
-      var hrefValue = appAwareLinks[i].getAttribute("href");
-      await extractCompanyInfoFromLink(hrefValue, companyInfo);
-    }
-  } else {
-    console.error(
-      "No elements with class 'app-aware-link' found inside '.scaffold-layout__main'."
-    );
+  for (let link of appAwareLinks) {
+    const hrefValue = link.getAttribute("href");
+    await extractCompanyInfoFromLink(hrefValue, companyInfo);
   }
 
-  console.log("Company Info:", companyInfo);
   return companyInfo;
 }
 
 async function scrapeAllPages() {
-  var DesC = Description();
-  if (DesC === "") {
-    return;
-  }
+  const description = getDescription();
+  if (description === "") return;
 
-  var allData = [];
+  const allData = [];
   let pageCount = 1;
-  let pageLimit = parseInt(document.getElementById("pageLimit").value, 10);
+  const pageLimit = parseInt(document.getElementById("pageLimit").value, 10);
 
   async function goToNextPage() {
-    function scrollToBottom() {
-      window.scrollTo(0, document.body.scrollHeight);
-    }
-    scrollToBottom();
+    window.scrollTo(0, document.body.scrollHeight);
 
-    setTimeout(async function () {
+    setTimeout(async () => {
       if (pageCount < pageLimit) {
-        var nextPageButton = document.querySelector(
-          ".artdeco-pagination__button--next .artdeco-button__text"
-        );
-
+        const nextPageButton = document.querySelector(".artdeco-pagination__button--next .artdeco-button__text");
         if (nextPageButton) {
           nextPageButton.click();
-
           pageCount++;
-
           setTimeout(scrapeCurrentPage, 1000);
         } else {
-          console.log("No next page button found. Scraping completed.");
           completeScraping();
         }
       } else {
-        console.log("Page limit reached. Scraping completed.");
         completeScraping();
       }
     }, 3000);
   }
 
   function completeScraping() {
-    console.log("All Data:", allData);
     document.getElementById("CompanyUrl").value = JSON.stringify(allData);
-
     saveProfileData(allData);
 
-    let url = "https://api-linkedin.acumen.llc";
-    let apipath = "/linkedinrls";
-    let method = "POST";
-    let data = allData;
-
+    const url = "https://api-linkedin.acumen.llc/linkedinrls";
     try {
-      fetchdata(url, apipath, method, data);
+      fetchdata(url, "", "POST", allData);
     } catch (error) {
       console.error("Error posting data:", error);
     }
   }
 
   async function scrapeCurrentPage() {
-    var currentPageData = await extract();
-    allData = allData.concat(currentPageData);
+    const currentPageData = await extract();
+    allData.push(...currentPageData);
     goToNextPage();
   }
 
