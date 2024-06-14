@@ -63,8 +63,27 @@ app.post("/sendInvite", async (req, res) => {
     await autoScroll(page);
     await page.waitForSelector(".artdeco-button__text");
 
-    await page.$$eval(".artdeco-button__text", (element) => element[7].click());
-    console.log("Clicked");
+    // await page.$$eval(".artdeco-button__text", (element) => element[7].click());
+    // console.log("Clicked");
+
+    // const connectButton = await page.$x(
+    //   "//span[contains(@class, 'artdeco-button__text') and text()='Connect']"
+    // );
+    // await connectButton[0].click();
+    // console.log("Clicked connectdd button");
+
+    await page.evaluate(() => {
+      const buttons = Array.from(
+        document.querySelectorAll(".artdeco-button__text")
+      );
+      const connectButton = buttons.find(
+        (button) => button.outerText.trim() === "Connect"
+      );
+      console.log("Connect button found:", connectButton);
+      if (connectButton) {
+        connectButton.click();
+      }
+    });
 
     //.artdeco-modal__actionbar .mr1
 
@@ -72,7 +91,6 @@ app.post("/sendInvite", async (req, res) => {
     await page.waitForSelector(sendButtonSelector);
     await page.click(sendButtonSelector);
     console.log("Clicked send button");
-
 
     //.artdeco-modal__actionbar  .artdeco-button__text          send
 
