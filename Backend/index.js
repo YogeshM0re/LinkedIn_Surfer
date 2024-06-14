@@ -66,11 +66,15 @@ app.post("/sendInvite", async (req, res) => {
     await page.$$eval(".artdeco-button__text", (element) => element[7].click());
     console.log("Clicked");
 
-    const sendButtonSelector =
-      'button[aria-label="Send now"], button[aria-label="Send without a note"]';
-    await page.waitForSelector(sendButtonSelector, { visible: true });
+    //.artdeco-modal__actionbar .mr1
+
+    const sendButtonSelector = ".artdeco-modal__actionbar .mr1";
+    await page.waitForSelector(sendButtonSelector);
     await page.click(sendButtonSelector);
     console.log("Clicked send button");
+
+
+    //.artdeco-modal__actionbar  .artdeco-button__text          send
 
     res.send({ message: "Invite sent successfully" });
   } catch (error) {

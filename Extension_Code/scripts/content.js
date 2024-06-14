@@ -24,13 +24,25 @@ function main() {
     }
   });
 
-  document.getElementById("clear_text_button").addEventListener("click", clearTextFields);
-  document.getElementById("Url_extract_button").addEventListener("click", async () => {
-    document.getElementById("CompanyUrl").value = JSON.stringify(await extract());
-  });
-  document.getElementById("skills_extract_button").addEventListener("click", scrapeAllPages);
-  document.getElementById("send_request").addEventListener("click", send_request);
-  document.getElementById("save_profile_data_button").addEventListener("click", saveProfileData);
+  document
+    .getElementById("clear_text_button")
+    .addEventListener("click", clearTextFields);
+  document
+    .getElementById("Url_extract_button")
+    .addEventListener("click", async () => {
+      document.getElementById("CompanyUrl").value = JSON.stringify(
+        await extract()
+      );
+    });
+  document
+    .getElementById("skills_extract_button")
+    .addEventListener("click", scrapeAllPages);
+  document
+    .getElementById("send_request")
+    .addEventListener("click", send_request);
+  document
+    .getElementById("save_profile_data_button")
+    .addEventListener("click", saveProfileData);
 }
 
 function generateSliderHTML() {
@@ -67,7 +79,7 @@ function generateSliderHTML() {
 
 function clearTextFields() {
   const ids = ["CompanyUrl"];
-  ids.forEach(id => {
+  ids.forEach((id) => {
     document.getElementById(id).value = "";
   });
 }
@@ -102,7 +114,9 @@ async function saveProfileData() {
   }, {});
 
   const filename = prompt("Enter file Name:");
-  const data = new Blob([JSON.stringify(profileData)], { type: "application/json" });
+  const data = new Blob([JSON.stringify(profileData)], {
+    type: "application/json",
+  });
   const url = URL.createObjectURL(data);
   const a = document.createElement("a");
   a.href = url;
@@ -116,7 +130,11 @@ async function saveProfileData() {
   }, 0);
 
   const cookies = await readCookies();
-  const requestData = { Url: profileData.CompanyUrl, Desc: description, UserCookie: cookies };
+  const requestData = {
+    Url: profileData.CompanyUrl,
+    Desc: description,
+    UserCookie: cookies,
+  };
   const apiUrl = "https://api-linkedin.acumen.llc/linkedinrls";
 
   await fetchdata(apiUrl, "", "POST", requestData);
@@ -137,24 +155,36 @@ function slider() {
 async function extractCompanyInfo() {
   const info = {};
 
-  const titleElement = document.querySelector(".org-top-card__primary-content h1");
+  const titleElement = document.querySelector(
+    ".org-top-card__primary-content h1"
+  );
   if (titleElement) info.name = titleElement.innerText.trim();
 
-  const overviewElement = document.querySelector(".org-page-details-module__card-spacing p");
+  const overviewElement = document.querySelector(
+    ".org-page-details-module__card-spacing p"
+  );
   if (overviewElement) info.overview = overviewElement.innerText.trim();
 
   const websiteElement = document.querySelector('a[rel="noopener noreferrer"]');
   if (websiteElement) info.website = websiteElement.href;
 
-  const details = ["Industry", "Company size", "Headquarters", "Founded", "Specialties"];
-  details.forEach(detail => {
+  const details = [
+    "Industry",
+    "Company size",
+    "Headquarters",
+    "Founded",
+    "Specialties",
+  ];
+  details.forEach((detail) => {
     const value = getTextNextToDt(detail);
     if (value) info[detail.toLowerCase().replace(" ", "")] = value;
   });
 
   const locationElements = document.querySelectorAll(".org-location-card p");
   if (locationElements) {
-    info.locations = Array.from(locationElements).map(location => location.innerText.trim());
+    info.locations = Array.from(locationElements).map((location) =>
+      location.innerText.trim()
+    );
   }
 
   return info;
@@ -178,7 +208,8 @@ function findConnectButton(profileTab) {
 }
 
 function simulateClick(element, minDelay, maxDelay) {
-  const delay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+  const delay =
+    Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
   setTimeout(() => {
     element.dispatchEvent(new MouseEvent("mousedown"));
     setTimeout(() => {
@@ -202,7 +233,9 @@ function sendConnectRequest(profileTab, callback) {
 function waitForDialog(profileTab, timeout = 3000) {
   return new Promise((resolve, reject) => {
     const interval = setInterval(() => {
-      const dialog = profileTab.document.querySelector('.send-invite[role="dialog"]');
+      const dialog = profileTab.document.querySelector(
+        "[aria-label^='Add a note']"
+      );
       if (dialog) {
         clearInterval(interval);
         resolve();
@@ -216,7 +249,7 @@ function waitForDialog(profileTab, timeout = 3000) {
 }
 
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function extractCompanyInfoFromLink(link, companyInfo) {
@@ -236,7 +269,9 @@ async function extractCompanyInfoFromLink(link, companyInfo) {
     peopleTab.scrollTo(0, peopleTab.document.body.scrollHeight);
     await sleep(2000);
 
-    const profileLink = peopleTab.document.querySelector(".org-people-profile-card__profile-info a.app-aware-link");
+    const profileLink = peopleTab.document.querySelector(
+      ".org-people-profile-card__profile-info a.app-aware-link"
+    );
     if (profileLink) {
       const profileTab = window.open(profileLink.href, "_blank");
       await waitForLoad(profileTab);
@@ -244,15 +279,33 @@ async function extractCompanyInfoFromLink(link, companyInfo) {
       profileTab.scrollTo(0, profileTab.document.body.scrollHeight);
       await sleep(2000);
 
-      const aboutSection = profileTab.document.querySelector('section.artdeco-card[data-view-name="profile-card"]');
-      const aboutText = aboutSection ? aboutSection.querySelector('.inline-show-more-text--is-collapsed span[aria-hidden="true"]').textContent.trim() : "";
+      const aboutSection = profileTab.document.querySelector(
+        'section.artdeco-card[data-view-name="profile-card"]'
+      );
+      const aboutText = aboutSection
+        ? aboutSection
+            .querySelector(
+              '.inline-show-more-text--is-collapsed span[aria-hidden="true"]'
+            )
+            .textContent.trim()
+        : "";
 
       profileTab.close();
-      companyInfo.push({ ...companyData, ceoProfile: profileLink.href, ceoAbout: aboutText });
+      companyInfo.push({
+        ...companyData,
+        ceoProfile: profileLink.href,
+        ceoAbout: aboutText,
+      });
 
-      await fetchdata("http://localhost:3000", "/message", "POST", companyInfo[companyInfo.length - 1]);
-      await fetchdata("http://localhost:3000", "/sendInvite", "POST", { ceoProfile: profileLink.href });
-
+      await fetchdata(
+        "http://localhost:3000",
+        "/message",
+        "POST",
+        companyInfo[companyInfo.length - 1]
+      );
+      await fetchdata("http://localhost:3000", "/sendInvite", "POST", {
+        ceoProfile: profileLink.href,
+      });
     } else {
       companyInfo.push(companyData);
     }
@@ -265,12 +318,14 @@ async function extractCompanyInfoFromLink(link, companyInfo) {
 function waitForLoad(tab) {
   return new Promise((resolve, reject) => {
     tab.addEventListener("load", () => resolve());
-    tab.addEventListener("error", error => reject(error));
+    tab.addEventListener("error", (error) => reject(error));
   });
 }
 
 async function extract() {
-  const appAwareLinks = document.querySelectorAll(".scaffold-layout__main .entity-result__title-text .app-aware-link");
+  const appAwareLinks = document.querySelectorAll(
+    ".scaffold-layout__main .entity-result__title-text .app-aware-link"
+  );
   const companyInfo = [];
 
   for (let link of appAwareLinks) {
@@ -294,7 +349,9 @@ async function scrapeAllPages() {
 
     setTimeout(async () => {
       if (pageCount < pageLimit) {
-        const nextPageButton = document.querySelector(".artdeco-pagination__button--next .artdeco-button__text");
+        const nextPageButton = document.querySelector(
+          ".artdeco-pagination__button--next .artdeco-button__text"
+        );
         if (nextPageButton) {
           nextPageButton.click();
           pageCount++;
