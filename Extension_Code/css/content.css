@@ -77,8 +77,8 @@
 
 .internal_button {
     display: inline-block;
-    padding: 15px 25px;
-    font-size: 15px;
+    padding: 10px 15px;
+    font-size: 10px;
     cursor: pointer;
     text-align: center;
     text-decoration: none;
@@ -86,7 +86,7 @@
     color: #fff;
     background: linear-gradient(to right, #140002, #0077b5);
     border: none;
-    border-radius: 15px;
+    border-radius: 5px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transition: background-color 0.4s;
 }
@@ -188,4 +188,64 @@ textarea:hover {
     font-weight: bold;
     color: #ffffff;
 
+}
+
+/* Input Section Styles */
+#inputSection {
+    padding: 15px;
+    background-color: #0077b5;
+    color: #ffffff;
+    text-align: center;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+#inputSection label {
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+#inputDescription,
+#pageLimit {
+    padding: 8px;
+    border: 1px solid #ffffff;
+    border-radius: 5px;
+    font-weight: bold;
+    color: #000000;
+    background-color: #ffffff;
+}
+
+#inputDescription::placeholder,
+#pageLimit::placeholder {
+    color: #999999;
+}
+
+/* Flex container for Input Designation and Page Limit sections */
+.flex-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+#scanButton {
+    padding: 8px 16px;
+    background-color: #005f8c;
+    border: none;
+    border-radius: 5px;
+    color: #ffffff;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-weight: bold;
+}
+
+#scanButton:hover {
+    background-color: #004870;
+}
+
+/* Body Container Styles */
+#sbodycontainer {
+    color: white;
+    padding: 20px;
 }

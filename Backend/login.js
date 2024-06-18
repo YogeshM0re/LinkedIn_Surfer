@@ -21,8 +21,8 @@ const loadCookie = async (page) => {
   const browser = await launch({ headless: false });
   const page = await browser.newPage();
   await page.goto("https://www.linkedin.com/login");
-  await page.type("#username", "tamab28841@noefa.com");
-  await page.type("#password", "f@5*WkBZ+9a!F66");
+  await page.type("#username", "kisop97912@egela.com");
+  await page.type("#password", "kisop97912");
   await page.click(".btn__primary--large");
   await page.waitForNavigation();
 

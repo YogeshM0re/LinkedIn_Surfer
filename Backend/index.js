@@ -50,11 +50,10 @@ app.post("/message", async (req, res) => {
 app.post("/sendInvite", async (req, res) => {
   let browser, page;
   try {
-    const browser = await launch({ headless: false });
+    browser = await launch({ headless: false });
 
-    const page = await browser.newPage();
+    page = await browser.newPage();
     await loadCookie(page);
-    //await reducePage(page);
 
     await page.goto(req.body.ceoProfile);
     console.log("Page navigated to:", req.body.ceoProfile);
@@ -62,15 +61,7 @@ app.post("/sendInvite", async (req, res) => {
     await autoScroll(page);
     await page.waitForSelector(".artdeco-button__text");
 
-    // await page.$$eval(".artdeco-button__text", (element) => element[7].click());
-    // console.log("Clicked");
-
-    // const connectButton = await page.$x(
-    //   "//span[contains(@class, 'artdeco-button__text') and text()='Connect']"
-    // );
-    // await connectButton[0].click();
-    // console.log("Clicked connectdd button");
-
+    // Click the "Connect" button
     await page.evaluate(() => {
       const buttons = Array.from(
         document.querySelectorAll(".artdeco-button__text")
@@ -83,21 +74,34 @@ app.post("/sendInvite", async (req, res) => {
       }
     });
 
-    //.artdeco-modal__actionbar .mr1
+    // Wait for the "Add a note" button and click it
+    const addNoteSelector = ".mr1.artdeco-button--secondary";
+    await page.waitForSelector(addNoteSelector);
+    await page.click(addNoteSelector);
+    console.log("Clicked 'Add a note' button");
 
-    const sendButtonSelector = ".artdeco-modal__actionbar .mr1";
+    // Wait for the textarea and type the message
+    const message = "Hi, I want to connect with you.";
+    await page.waitForSelector(".connect-button-send-invite__custom-message");
+    await page.evaluate((message) => {
+      document.querySelector(
+        ".connect-button-send-invite__custom-message"
+      ).value = message;
+    }, message);
+    console.log("Typed message in the textarea");
+
+    // Click the "Send invitation" button
+    const sendButtonSelector = '[aria-label="Send invitation"]';
     await page.waitForSelector(sendButtonSelector);
     await page.click(sendButtonSelector);
-    console.log("Clicked send button");
-
-    //.artdeco-modal__actionbar  .artdeco-button__text          send
+    console.log("Clicked 'Send invitation' button");
 
     res.send({ message: "Invite sent successfully" });
   } catch (error) {
     console.error("Error sending invite:", error);
     res.status(500).send({ error: "Internal Server Error" });
   } finally {
-    //if (browser) await browser.close();
+    if (browser) await browser.close();
   }
 });
 

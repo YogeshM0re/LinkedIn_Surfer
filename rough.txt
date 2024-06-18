@@ -14,9 +14,6 @@ const todoresp = { todo: "showPageAction" };
 chrome.runtime.sendMessage(todoresp);
 main();
 
-let isPaused = false;
-let pageCount = 1;
-
 function main() {
   const sliderInnerHTMLString = generateSliderHTML();
   sliderGen(sliderInnerHTMLString);
@@ -27,73 +24,82 @@ function main() {
     }
   });
 
+  // document
+  //   .getElementById("clear_text_button")
+  //   .addEventListener("click", clearTextFields);
   document
     .getElementById("Url_extract_button")
     .addEventListener("click", async () => {
       document.getElementById("CompanyUrl").value = JSON.stringify(
         await extract()
       );
-      console.log("extracted");
     });
   document
     .getElementById("skills_extract_button")
     .addEventListener("click", scrapeAllPages);
-
-  document.getElementById("pause_button").addEventListener("click", () => {
-    isPaused = true;
-    console.log("paused");
-  });
-  document.getElementById("resume_button").addEventListener("click", () => {
-    isPaused = false;
-    goToNextPage();
-    console.log("resumed");
-  });
+  // document
+  //   .getElementById("send_request")
+  //   .addEventListener("click", send_request);
+  // document
+  //   .getElementById("save_profile_data_button")
+  //   .addEventListener("click", saveProfileData);
 }
-
 function generateSliderHTML() {
   return `<!-- HEADER IS HERE -->
-      <div id='header'>
-          <img src='https://acumen.llc/Software-Companies-Mumbai-India-Images/Acumen-logo-tb.png' alt='Logo'/>
-          <h1>LinkedIn Surfer</h1>
-      </div>
-      <br/>
-      <div id='inputSection'>
+    <div id='header'>
+        <img src='https://acumen.llc/Software-Companies-Mumbai-India-Images/Acumen-logo-tb.png' alt='Logo'/>
+        <h1>LinkedIn Surfer</h1>
+    </div>
+    <br/>
+    <div id='inputSection'>
         <div class='flex-container'>
-            <input type='text' id='inputDesignation' placeholder='Enter designation'/>
+            <label for='inputDescription'></label>
+            <input type='text' id='inputDescription' placeholder='Enter designation'/>
         </div>
         <br/>
         <div class='flex-container'>
             <label for='pageLimit'>Page Limit: </label>
             <input type='number' id='pageLimit' placeholder='Enter page limit' value='1'/>
-            <button class='internal_button' id='skills_extract_button'>Scan</button>
-    
+            <button id='skills_extract_button>Scan</button>
         </div>
-        <div id='Url_extract_button'></div>
-        <button class='internal_button' id='pause_button'>Pause</button>
-        <button class='internal_button' id='resume_button' style='display:none'>Resume</button> 
-        <button class='internal_button' id='save_button' style='display:none'>Save</button> 
-        <button class='internal_button' id='cancel_button' style='display:none'>Cancel</button> 
     </div>
-      <!-- THE BODY CONTAINER IS HERE -->
-      <div id='sbodycontainer'>
-          <br/>
-          <br/>
-          <span style='font-size: 10px'><i> </i></span>
-          <textarea id='CompanyUrl'></textarea>
-          <br/>
-      </div>
-      <!-- THE FOOTER IS HERE -->
-      <div id='sfooter'><hr/>
-      </div>`;
+    <!-- THE BODY CONTAINER IS HERE -->
+    <div id='sbodycontainer'>
+        <br/>
+        <br/>
+        <span style='font-size: 10px'><i> </i></span>
+        <textarea id='CompanyUrl'></textarea>
+        <br/>
+        <div class='internal_button' id='skills_extract_button'>Save All Pages</div>
+        <div class='internal_button' id='Url_extract_button'>Extract Current Page</div>
+        <!--  <div class='internal_button' id='send_request'>Send request </div>  -->
+    </div>
+    <!-- THE FOOTER IS HERE -->
+    <div id='sfooter'><hr/>
+      <!--   <div class='internal_button' id='save_profile_data_button'>Save Extracted Links</div>  -->
+    </div>`;
 }
 
-function getDesignation() {
-  const inputDesignation = document.getElementById("inputDesignation").value;
-  if (inputDesignation.trim() === "") {
-    alert("Designation cannot be empty");
+
+// function clearTextFields() {
+//   const ids = ["CompanyUrl"];
+//   ids.forEach((id) => {
+//     document.getElementById(id).value = "";
+//   });
+// }
+
+// async function send_request() {
+//   console.log("request sent");
+//   sendConnectRequest(window);
+// }
+
+function getDescription() {
+  const inputDescription = document.getElementById("inputDescription").value;
+  if (inputDescription.trim() === "") {
+    alert("Description cannot be empty");
     return "";
   }
-  return inputDesignation;
+  return inputDescription;
 }
 
 async function readCookies() {
@@ -101,8 +107,8 @@ async function readCookies() {
 }
 
 async function saveProfileData() {
-  const designation = getDesignation();
-  if (designation === "") return;
+  const description = getDescription();
+  if (description === "") return;
 
   const textBoxIds = ["CompanyUrl"];
   const profileData = textBoxIds.reduce((data, id) => {
@@ -111,7 +117,7 @@ async function saveProfileData() {
     return data;
   }, {});
 
-  const filename = prompt("Enter file name:");
+  const filename = prompt("Enter file Name:");
   const data = new Blob([JSON.stringify(profileData)], {
     type: "application/json",
   });
@@ -130,7 +136,7 @@ async function saveProfileData() {
   const cookies = await readCookies();
   const requestData = {
     Url: profileData.CompanyUrl,
-    Desc: designation,
+    Desc: description,
     UserCookie: cookies,
   };
   const apiUrl = "https://api-linkedin.acumen.llc/linkedinrls";
@@ -216,6 +222,36 @@ function simulateClick(element, minDelay, maxDelay) {
   }, delay);
 }
 
+function sendConnectRequest(profileTab, callback) {
+  const connectButton = findConnectButton(profileTab);
+  if (connectButton) {
+    connectButton.click();
+    simulateClick(connectButton, 1000, 2000);
+    if (callback) callback();
+  } else {
+    console.log("Connect button not found.");
+    if (callback) callback();
+  }
+}
+
+function waitForDialog(profileTab, timeout = 3000) {
+  return new Promise((resolve, reject) => {
+    const interval = setInterval(() => {
+      const dialog = profileTab.document.querySelector(
+        "[aria-label^='Add a note']"
+      );
+      if (dialog) {
+        clearInterval(interval);
+        resolve();
+      }
+    }, 100);
+    setTimeout(() => {
+      clearInterval(interval);
+      reject(new Error("Dialog box not found within timeout"));
+    }, timeout);
+  });
+}
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -229,14 +265,9 @@ async function extractCompanyInfoFromLink(link, companyInfo) {
     await sleep(2000);
 
     const companyData = await companyTab.extractCompanyInfo();
-    console.log("Company data:", companyData);
     companyTab.close();
 
-    const designation = document.getElementById("inputDesignation").value;
-    const peopleTab = window.open(
-      link + `people/?keywords=${designation}`,
-      "_blank"
-    );
+    const peopleTab = window.open(link + "people/?keywords=ceo", "_blank");
     await waitForLoad(peopleTab);
 
     peopleTab.scrollTo(0, peopleTab.document.body.scrollHeight);
@@ -301,153 +332,61 @@ async function extract() {
   );
   const companyInfo = [];
 
-  for (let i = 0; i < appAwareLinks.length; i++) {
-    const hrefValue = appAwareLinks[i].getAttribute("href");
+  for (let link of appAwareLinks) {
+    const hrefValue = link.getAttribute("href");
     await extractCompanyInfoFromLink(hrefValue, companyInfo);
-
-    // Append the data for the current company to textarea
-    const currentData = JSON.stringify(companyInfo);
-    const currentTextareaValue = document.getElementById("CompanyUrl").value;
-    console.log("Current Data", currentData);
-    const newDataToAppend = currentTextareaValue
-      ? `${currentTextareaValue}, ${currentData}`
-      : currentData;
-    document.getElementById("CompanyUrl").value = newDataToAppend;
   }
 
   return companyInfo;
 }
 
-let currentScrapingIndex = 0; // Track which company link is currently being scraped
+async function scrapeAllPages() {
+  const description = getDescription();
+  if (description === "") return;
 
-function completeScraping() {
-  const allDataTextarea = document.getElementById("CompanyUrl");
-  allData = JSON.parse(`[${allDataTextarea.value}]`);
+  const allData = [];
+  let pageCount = 1;
+  const pageLimit = parseInt(document.getElementById("pageLimit").value, 10);
 
-  const filename = prompt("Enter file name:");
-  const data = new Blob([JSON.stringify(allData)], {
-    type: "application/json",
-  });
-  const url = URL.createObjectURL(data);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${filename}.txt`;
-  document.body.appendChild(a);
-  a.click();
+  async function goToNextPage() {
+    window.scrollTo(0, document.body.scrollHeight);
 
-  setTimeout(() => {
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, 0);
-}
-async function goToNextPage() {
-  if (isPaused) return;
-
-  window.scrollTo(0, document.body.scrollHeight);
-
-  setTimeout(async () => {
-    if (pageCount < pageLimit) {
-      const nextPageButton = document.querySelector(
-        ".artdeco-pagination__button--next .artdeco-button__text"
-      );
-      if (nextPageButton) {
-        nextPageButton.click();
-        pageCount++;
-        setTimeout(scrapeCurrentPage, 1000);
+    setTimeout(async () => {
+      if (pageCount < pageLimit) {
+        const nextPageButton = document.querySelector(
+          ".artdeco-pagination__button--next .artdeco-button__text"
+        );
+        if (nextPageButton) {
+          nextPageButton.click();
+          pageCount++;
+          setTimeout(scrapeCurrentPage, 1000);
+        } else {
+          completeScraping();
+        }
       } else {
         completeScraping();
       }
-    } else {
-      completeScraping();
-    }
-  }, 3000);
-}
-async function scrapeAllPages() {
-  const designation = getDesignation();
-  if (designation === "") return;
+    }, 3000);
+  }
 
-  let allData = [];
-  pageCount = 1;
-  const pageLimit = parseInt(document.getElementById("pageLimit").value, 10);
+  function completeScraping() {
+    document.getElementById("CompanyUrl").value = JSON.stringify(allData);
+    saveProfileData(allData);
+
+    const url = "https://api-linkedin.acumen.llc/linkedinrls";
+    try {
+      fetchdata(url, "", "POST", allData);
+    } catch (error) {
+      console.error("Error posting data:", error);
+    }
+  }
 
   async function scrapeCurrentPage() {
-    const appAwareLinks = document.querySelectorAll(
-      ".scaffold-layout__main .entity-result__title-text .app-aware-link"
-    );
-
-    // Continue scraping from the last index where we paused
-    for (let i = currentScrapingIndex; i < appAwareLinks.length; i++) {
-      if (isPaused) {
-        currentScrapingIndex = i; // Save current index to resume from later
-        return;
-      }
-
-      const hrefValue = appAwareLinks[i].getAttribute("href");
-      await extractCompanyInfoFromLink(hrefValue, allData);
-
-      const currentData = JSON.stringify(allData);
-      const currentTextareaValue = document.getElementById("CompanyUrl").value;
-      const newDataToAppend = currentTextareaValue
-        ? `${currentTextareaValue}, ${currentData}`
-        : currentData;
-      document.getElementById("CompanyUrl").value = newDataToAppend;
-
-      currentScrapingIndex = i + 1;
-    }
+    const currentPageData = await extract();
+    allData.push(...currentPageData);
     goToNextPage();
   }
+
   scrapeCurrentPage();
+  return allData;
 }
-
-document.getElementById("pause_button").addEventListener("click", () => {
-  isPaused = true;
-  toggleButtonVisibility("pause_button", false);
-  toggleButtonVisibility("resume_button", true);
-  toggleButtonVisibility("save_button", true);
-  toggleButtonVisibility("cancel_button", true);
-  console.log("Paused scraping");
-});
-
-document.getElementById("resume_button").addEventListener("click", () => {
-  isPaused = false;
-  goToNextPage();
-  toggleButtonVisibility("pause_button", true);
-  toggleButtonVisibility("resume_button", false);
-  toggleButtonVisibility("save_button", false);
-  toggleButtonVisibility("cancel_button", false);
-  console.log("Resumed scraping");
-});
-
-document.getElementById("cancel_button").addEventListener("click", () => {
-  isPaused = true; // Set isPaused to true to stop scraping
-  currentScrapingIndex = 0; // Reset scraping index
-  location.reload(); // Reload the page to cancel scraping and clear data
-});
-
-function toggleButtonVisibility(buttonId, visible) {
-  const button = document.getElementById(buttonId);
-  button.style.display = visible ? "inline-block" : "none";
-}
-// Save button functionality
-document.getElementById("save_button").addEventListener("click", async () => {
-  const allDataTextarea = document.getElementById("CompanyUrl");
-  const allData = JSON.parse(`[${allDataTextarea.value}]`);
-
-  const filename = prompt("Enter file name:");
-  if (filename) {
-    const data = new Blob([JSON.stringify(allData)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(data);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${filename}.txt`;
-    document.body.appendChild(a);
-    a.click();
-
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 0);
-  }
-});
